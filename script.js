@@ -122,11 +122,16 @@ function finishTest() {
 
   // Зберегти (оновити, якщо сьогодні вже є запис)
   const existing = stressData.find(item => item.date === dateStr);
-  if (existing) existing.value = stressLevel;
-  else stressData.push({ date: dateStr, value: stressLevel });
+if (existing) {
+  existing.value = stressLevel;
+} else {
+  stressData.push({ date: dateStr, value: stressLevel });
+}
 
-  updateChart();
-  updateHistory();
+// Переконаймося, що формат коректний
+stressData = stressData.filter(item => item.date && typeof item.value === "number");
+updateChart();
+updateHistory();
 
   // 💡 Порада залежно від результату
   let tip = "";
