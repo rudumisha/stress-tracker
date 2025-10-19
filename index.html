@@ -14,20 +14,19 @@
     </header>
 
     <main>
-      <section class="today">
-        <h2>Сьогоднішній рівень стресу</h2>
-        <div class="stress-display" id="stressValue">–</div>
-        <button id="startTest">Пройти тест</button>
-      </section>
+        <h2>Твій трекер стресу</h2>
 
-      <section class="chart-section">
-        <h2>Динаміка за тиждень</h2>
+        <p>Сьогоднішній рівень стресу</p>
+        <h1 id="stress-level">–</h1>
+        <button id="test-button">Пройти тест</button>
+        
+        <h3>Динаміка за тиждень</h3>
         <canvas id="stressChart"></canvas>
-      </section>
-
-      <section class="history">
-        <h2>Історія результатів</h2>
-        <ul id="historyList"></ul>
+        
+        <h3>Історія результатів</h3>
+        <div id="history-list"></div>
+        
+        <button id="clear-button">Очистити історію</button>
       </section>
     </main>
   </div>

@@ -1,200 +1,184 @@
-// Отримуємо збережені дані
-let stressData = JSON.parse(localStorage.getItem("stressData")) || [];
+// ======================= //
+//   ТРЕКЕР СТРЕСУ v2.0   //
+// ======================= //
 
-// 🧹 Очистимо старі або некоректні записи
-stressData = stressData.filter(item => item && typeof item === "object" && item.date && item.value !== undefined);
-localStorage.setItem("stressData", JSON.stringify(stressData));
+// --- Елементи ---
+const stressLevelText = document.getElementById("stress-level");
+const testButton = document.getElementById("test-button");
+const clearButton = document.getElementById("clear-button");
+const historyList = document.getElementById("history-list");
+const ctx = document.getElementById("stressChart").getContext("2d");
 
-
-// DOM елементи
-const stressValue = document.getElementById("stressValue");
-const historyList = document.getElementById("historyList");
+// Модалка тесту
 const modal = document.getElementById("testModal");
 const questionText = document.getElementById("questionText");
-const answers = document.querySelectorAll(".answer");
+const answerButtons = document.querySelectorAll(".answer");
 
-// Питання
-const questions = [
-  "Чи відчуваєш ти напруження сьогодні?",
-  "Чи було складно зосередитися?",
-  "Чи погано ти спав(-ла) минулої ночі?",
-  "Чи був(-ла) ти роздратованим(-ою)?",
-  "Чи відчуваєш втому без причини?"
-];
-
-let score = 0;
-let currentQuestion = 0;
-
-// === Функції ===
-
-// Отримати назву дня українською
-function getDayName(date) {
-  const days = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-  return days[date.getDay()];
-}
-
-// Вибрати останні 7 днів
-function getLast7DaysData() {
-  const today = new Date();
-  const result = [];
-
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(today.getDate() - i);
-    const dateStr = d.toLocaleDateString('uk-UA');
-
-    const record = stressData.find(item => item.date === dateStr);
-    result.push(record ? record.value : null);
-  }
-
-  return result;
-}
-
-// Ініціалізація графіка
-const ctx = document.getElementById('stressChart');
-const chart = new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'],
-    datasets: [{
-      label: 'Рівень стресу',
-      data: getLast7DaysData(),
-      borderColor: '#f39c12',
-      backgroundColor: 'rgba(243,156,18,0.2)',
-      fill: true,
-      tension: 0.3
-    }]
-  },
-  options: {
-    scales: {
-      y: { min: 0, max: 10 }
-    }
-  }
-});
-
-// Оновити графік
-function updateChart() {
-  chart.data.datasets[0].data = getLast7DaysData();
-  chart.update();
-  localStorage.setItem("stressData", JSON.stringify(stressData));
-}
-
-// Оновити історію
-function updateHistory() {
-  historyList.innerHTML = "";
-  stressData.slice(-7).reverse().forEach(item => {
-    const li = document.createElement("li");
-    li.textContent = `${item.date} (${getDayName(new Date(item.date))}): ${item.value}/10`;
-    historyList.appendChild(li);
-  });
-}
-
-// Почати тест
-document.getElementById("startTest").addEventListener("click", () => {
-  score = 0;
-  currentQuestion = 0;
-  questionText.innerText = questions[currentQuestion];
-  modal.classList.remove("hidden");
-});
-
-// Обробка натискань у тесті
-answers.forEach(btn => {
-  btn.addEventListener("click", () => {
-    score += Number(btn.dataset.value);
-    currentQuestion++;
-
-    if (currentQuestion < questions.length) {
-      questionText.innerText = questions[currentQuestion];
-    } else {
-      modal.classList.add("hidden");
-      finishTest();
-    }
-  });
-});
-
-// Завершення тесту
-function finishTest() {
-  const stressLevel = Math.round((score / (questions.length * 2)) * 10);
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('uk-UA');
-
-  stressValue.innerText = `${stressLevel}/10`;
-
-  // Зберегти (оновити, якщо сьогодні вже є запис)
-  const existing = stressData.find(item => item.date === dateStr);
-if (existing) {
-  existing.value = stressLevel;
-} else {
-  stressData.push({ date: dateStr, value: stressLevel });
-}
-
-// Переконаймося, що формат коректний
-stressData = stressData.filter(item => item.date && typeof item.value === "number");
-updateChart();
-updateHistory();
-
-  // 💡 Порада залежно від результату
-  let tip = "";
-  if (stressLevel <= 3) tip = "Чудово! Продовжуй у тому ж дусі 🌞";
-  else if (stressLevel <= 6) tip = "Спробуй прогулянку або музику для розслаблення 🌿";
-  else tip = "Твій рівень стресу високий 😟. Зроби паузу й подихай глибше 🧘";
-
-  setTimeout(() => alert(tip), 300);
-}
-
-// При запуску оновити інтерфейс
-updateChart();
-updateHistory();
-
-// === Нагадування ===
+// Нагадування
 const reminder = document.getElementById("reminder");
 const reminderBtn = document.getElementById("reminderBtn");
 const closeReminder = document.getElementById("closeReminder");
 
-// Запуск тесту з нагадування
-reminderBtn.addEventListener("click", () => {
-  reminder.classList.add("hidden");
-  document.getElementById("startTest").click();
+// --- Дані ---
+let stressData = JSON.parse(localStorage.getItem("stressData")) || [];
+stressData = stressData.filter((item) => item && item.date && typeof item.value === "number");
+localStorage.setItem("stressData", JSON.stringify(stressData));
+
+// --- Питання ---
+const questions = [
+  "Чи відчував ти сьогодні втому без причини?",
+  "Чи було важко зосередитись на справах?",
+  "Чи виникали проблеми зі сном або апетитом?",
+  "Чи часто сьогодні відчував тривогу або роздратування?",
+  "Чи здавалося, що все валиться з рук?",
+];
+
+let currentQuestion = 0;
+let totalScore = 0;
+
+// --- Створення графіка ---
+let stressChart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"],
+    datasets: [
+      {
+        label: "Рівень стресу",
+        data: [],
+        borderColor: "#3b82f6",
+        backgroundColor: "rgba(59, 130, 246, 0.2)",
+        borderWidth: 2,
+        tension: 0.3,
+        pointRadius: 5,
+        pointBackgroundColor: "#3b82f6",
+      },
+    ],
+  },
+  options: {
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 10,
+      },
+    },
+  },
 });
 
-// Закрити нагадування
+// --- Функції оновлення ---
+function updateChart() {
+  const weekData = new Array(7).fill(null);
+
+  stressData.forEach((item) => {
+    const [day, month, year] = item.date.split(".");
+    const date = new Date(`${year}-${month}-${day}`);
+    const dayOfWeek = (date.getDay() + 6) % 7;
+    weekData[dayOfWeek] = item.value;
+  });
+
+  stressChart.data.datasets[0].data = weekData;
+  stressChart.update();
+}
+
+function updateHistory() {
+  historyList.innerHTML = stressData
+    .map(
+      (item) =>
+        `<div class="history-item">${item.date} (${item.time}): ${item.value}/10</div>`
+    )
+    .join("");
+}
+
+// --- Відображення питання ---
+function showQuestion() {
+  if (currentQuestion < questions.length) {
+    questionText.textContent = questions[currentQuestion];
+  } else {
+    finishTest();
+  }
+}
+
+// --- Почати тест ---
+function startTest() {
+  totalScore = 0;
+  currentQuestion = 0;
+  modal.classList.remove("hidden");
+  showQuestion();
+}
+
+// --- Обробка відповіді ---
+answerButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const value = parseInt(btn.dataset.value);
+    totalScore += value;
+    currentQuestion++;
+    showQuestion();
+  });
+});
+
+// --- Завершення тесту ---
+function finishTest() {
+  modal.classList.add("hidden");
+
+  // Максимальний бал = 2 * кількість питань
+  const stressLevel = Math.round((totalScore / (questions.length * 2)) * 10);
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("uk-UA");
+  const hours = now.getHours().toString().padStart(2, "0");
+  const minutes = now.getMinutes().toString().padStart(2, "0");
+
+  const existing = stressData.find((item) => item.date === dateStr);
+  if (existing) {
+    existing.value = stressLevel;
+    existing.time = `${hours}:${minutes}`;
+  } else {
+    stressData.push({
+      date: dateStr,
+      time: `${hours}:${minutes}`,
+      value: stressLevel,
+    });
+  }
+
+  localStorage.setItem("stressData", JSON.stringify(stressData));
+
+  stressLevelText.textContent = `${stressLevel}/10`;
+  updateChart();
+  updateHistory();
+}
+
+// --- Очистити історію ---
+function clearHistory() {
+  if (confirm("Очистити всі результати?")) {
+    localStorage.removeItem("stressData");
+    stressData = [];
+    updateChart();
+    updateHistory();
+  }
+}
+
+// --- Нагадування ---
+function showReminder() {
+  reminder.classList.remove("hidden");
+}
+
+reminderBtn.addEventListener("click", () => {
+  reminder.classList.add("hidden");
+  startTest();
+});
+
 closeReminder.addEventListener("click", () => {
   reminder.classList.add("hidden");
 });
 
-// Перевірка часу (кожні 30 секунд)
+// --- Автоматичне нагадування кожні 12 годин ---
 setInterval(() => {
-  const now = new Date();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
+  showReminder();
+}, 1000 * 60 * 60 * 12);
 
-  // Показати нагадування о 20:00, якщо користувач ще не проходив тест сьогодні
-  const today = new Date().toLocaleDateString('uk-UA');
-  const alreadyDone = stressData.some(item => item.date === today);
+// --- Події ---
+testButton.addEventListener("click", startTest);
+clearButton.addEventListener("click", clearHistory);
 
-  if (hours === 20 && minutes === 0 && !alreadyDone) {
-    reminder.classList.remove("hidden");
-  }
-}, 30000); // перевірка кожні 30 секунд
-
-
-// Дозвіл на сповіщення
-if (Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
-  
-  function showNotification() {
-    if (Notification.permission === "granted") {
-      new Notification("Нагадування 🌿", {
-        body: "Час пройти тест на рівень стресу!",
-        icon: "https://cdn-icons-png.flaticon.com/512/733/733585.png"
-      });
-    }
-  }
-  
-  // Виклик сповіщення одночасно з нагадуванням
-  if (hours === 20 && minutes === 0 && !alreadyDone) {
-    reminder.classList.remove("hidden");
-    showNotification();
-  }
-  
+// --- Запуск ---
+updateChart();
+updateHistory();
