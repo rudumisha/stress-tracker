@@ -112,3 +112,45 @@ button:hover {
     from { opacity: 0; transform: scale(0.9); }
     to { opacity: 1; transform: scale(1); }
   }
+  /* === НАГАДУВАННЯ === */
+.reminder {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #6a9cfb;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    padding: 20px;
+    z-index: 20;
+    animation: slideIn 0.4s ease;
+  }
+  
+  .reminder-content {
+    text-align: center;
+  }
+  
+  .reminder button {
+    margin: 5px;
+    background: #6a9cfb;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  
+  .reminder button:hover {
+    background: #507fe8;
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
