@@ -1,12 +1,28 @@
 // Дані для графіка
 let stressData = JSON.parse(localStorage.getItem("stressData")) || [];
+let score = 0;
+let currentQuestion = 0;
 
-// Відображення графіка
+const questions = [
+  "Чи відчуваєш ти напруження сьогодні?",
+  "Чи було складно зосередитися?",
+  "Чи погано ти спав(-ла) минулої ночі?",
+  "Чи був(-ла) ти роздратованим(-ою)?",
+  "Чи відчуваєш втому без причини?"
+];
+
+// Елементи DOM
+const modal = document.getElementById("testModal");
+const questionText = document.getElementById("questionText");
+const answers = document.querySelectorAll(".answer");
+const stressValue = document.getElementById("stressValue");
+const historyList = document.getElementById("historyList");
+
 const ctx = document.getElementById('stressChart');
 const chart = new Chart(ctx, {
   type: 'line',
   data: {
-    labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
+    labels: ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'],
     datasets: [{
       label: 'Рівень стресу',
       data: stressData,
@@ -24,33 +40,48 @@ function updateChart() {
   localStorage.setItem("stressData", JSON.stringify(stressData));
 }
 
-// Пройти тест
+// Відкрити тест
 document.getElementById('startTest').addEventListener('click', () => {
-  let score = 0;
-  const questions = [
-    "Чи відчуваєш ти напруження сьогодні?",
-    "Чи було складно зосередитися?",
-    "Чи погано ти спав(-ла) минулої ночі?",
-    "Чи був(-ла) ти роздратованим(-ою)?",
-    "Чи відчуваєш втому без причини?"
-  ];
+  score = 0;
+  currentQuestion = 0;
+  questionText.innerText = questions[currentQuestion];
+  modal.classList.remove("hidden");
+});
 
-  questions.forEach(q => {
-    const answer = prompt(q + " (0 - ні, 1 - трохи, 2 - так)");
-    score += Number(answer);
+// Вибір відповіді
+answers.forEach(btn => {
+  btn.addEventListener("click", () => {
+    score += Number(btn.dataset.value);
+    currentQuestion++;
+
+    if (currentQuestion < questions.length) {
+      questionText.innerText = questions[currentQuestion];
+    } else {
+      modal.classList.add("hidden");
+      finishTest();
+    }
   });
+});
 
+// Результат тесту
+function finishTest() {
   const stressLevel = Math.round((score / (questions.length * 2)) * 10);
-  document.getElementById("stressValue").innerText = `${stressLevel}/10`;
+  stressValue.innerText = `${stressLevel}/10`;
 
-  // Зберегти результат
   stressData.push(stressLevel);
-  if (stressData.length > 7) stressData.shift(); // тільки останні 7 днів
+  if (stressData.length > 7) stressData.shift();
   updateChart();
 
-  // Історія
   const date = new Date().toLocaleDateString('uk-UA');
   const li = document.createElement('li');
   li.textContent = `${date}: рівень стресу ${stressLevel}/10`;
-  document.getElementById("historyList").prepend(li);
-});
+  historyList.prepend(li);
+
+  // 💡 Порада залежно від результату
+  let tip = "";
+  if (stressLevel <= 3) tip = "Чудово! Продовжуй у тому ж дусі 🌞";
+  else if (stressLevel <= 6) tip = "Спробуй відпочити або прогулятись на свіжому повітрі 🌿";
+  else tip = "Зроби паузу. Глибоко вдихни і видихни 🧘";
+
+  setTimeout(() => alert(tip), 200);
+}
