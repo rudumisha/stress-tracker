@@ -1,6 +1,11 @@
 // Отримуємо збережені дані
 let stressData = JSON.parse(localStorage.getItem("stressData")) || [];
 
+// 🧹 Очистимо старі або некоректні записи
+stressData = stressData.filter(item => item && typeof item === "object" && item.date && item.value !== undefined);
+localStorage.setItem("stressData", JSON.stringify(stressData));
+
+
 // DOM елементи
 const stressValue = document.getElementById("stressValue");
 const historyList = document.getElementById("historyList");
