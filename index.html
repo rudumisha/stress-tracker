@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Трекер стресу</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Твій трекер стресу</h1>
+    </header>
+
+    <main>
+      <section class="today">
+        <h2>Сьогоднішній рівень стресу</h2>
+        <div class="stress-display" id="stressValue">–</div>
+        <button id="startTest">Пройти тест</button>
+      </section>
+
+      <section class="chart-section">
+        <h2>Динаміка за тиждень</h2>
+        <canvas id="stressChart"></canvas>
+      </section>
+
+      <section class="history">
+        <h2>Історія результатів</h2>
+        <ul id="historyList"></ul>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
